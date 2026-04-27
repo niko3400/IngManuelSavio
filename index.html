@@ -877,11 +877,45 @@
       color: var(--gold) !important;
     }
 
+    .visitor-bar {
+      background: #040404;
+      border-top: 1px solid rgba(201,168,76,0.08);
+      padding: 18px 60px;
+      display: flex; align-items: center; justify-content: center; gap: 28px;
+    }
+    .visitor-bar-label {
+      font-family: 'Cinzel', serif;
+      font-size: 9px; font-weight: 600;
+      letter-spacing: 0.35em; text-transform: uppercase;
+      color: var(--text-muted);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .visitor-bar-label::before,
+    .visitor-bar-label::after {
+      content: ''; width: 24px; height: 1px;
+      background: rgba(201,168,76,0.2);
+    }
+    .visitor-count {
+      font-family: 'Cinzel', serif;
+      font-size: 22px; font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 0.1em;
+      min-width: 80px; text-align: center;
+      display: inline-block;
+    }
+    .visitor-count.loading {
+      opacity: 0.3;
+      animation: blink 1.2s ease-in-out infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 0.3; } 50% { opacity: 0.6; }
+    }
+
     footer {
       padding: 28px 60px;
       background: #040404;
       display: flex; align-items: center; justify-content: space-between;
-      border-top: 1px solid rgba(201,168,76,0.08);
+      border-top: 1px solid rgba(201,168,76,0.05);
     }
     .footer-logo {
       font-family: 'Cinzel', serif;
@@ -1430,9 +1464,15 @@
   </section>
 
   <!-- ═══════════ FOOTER ═══════════ -->
+  <div class="visitor-bar">
+    <p class="visitor-bar-label">Visitantes</p>
+    <span class="visitor-count loading" id="visitorCount">—</span>
+    <p class="visitor-bar-label">en este sitio</p>
+  </div>
+
   <footer>
     <span class="footer-logo">Log∴ Ing. Manuel Savio Nº 567</span>
-    <p class="footer-copy">© 2025 · Todos los derechos reservados · Ramallo, Buenos Aires</p>
+    <p class="footer-copy">© 2026 · Todos los derechos reservados · Ramallo, Buenos Aires</p>
     <p class="footer-gran-logia">G∴L∴A∴ · Gran Logia de la Argentina</p>
   </footer>
 
@@ -1464,6 +1504,36 @@
     }, { threshold: 0.12 });
 
     document.querySelectorAll('[data-reveal]').forEach(el => revealObserver.observe(el));
+
+    // ── VISITOR COUNTER ──
+    (function () {
+      const el = document.getElementById('visitorCount');
+      // Only count once per browser session so refreshes don't inflate the number
+      const sessionKey = 'lms567_visited';
+      const endpoint = sessionStorage.getItem(sessionKey)
+        ? 'https://api.countapi.xyz/get/masoneriaramallo/lms567'
+        : 'https://api.countapi.xyz/hit/masoneriaramallo/lms567';
+
+      fetch(endpoint)
+        .then(r => r.json())
+        .then(data => {
+          if (data && data.value) {
+            sessionStorage.setItem(sessionKey, '1');
+            // Animate the number rolling up
+            const target = data.value;
+            const start = Math.max(0, target - 80);
+            let current = start;
+            const step = () => {
+              current = Math.min(current + Math.ceil((target - current) / 8 + 1), target);
+              el.textContent = current.toLocaleString('es-AR');
+              el.classList.remove('loading');
+              if (current < target) requestAnimationFrame(step);
+            };
+            requestAnimationFrame(step);
+          }
+        })
+        .catch(() => { el.textContent = '—'; el.classList.remove('loading'); });
+    })();
 
     // ── FORM SUBMIT (demo — replace with real backend / mailto) ──
     function handleSubmit(e) {
