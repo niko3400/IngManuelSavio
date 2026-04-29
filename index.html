@@ -1505,34 +1505,53 @@
 
     document.querySelectorAll('[data-reveal]').forEach(el => revealObserver.observe(el));
 
-    // ── VISITOR COUNTER ──
+    // ── VISITOR COUNTER (abacus.jasoncameron.dev) ──
     (function () {
       const el = document.getElementById('visitorCount');
-      // Only count once per browser session so refreshes don't inflate the number
       const sessionKey = 'lms567_visited';
-      const endpoint = sessionStorage.getItem(sessionKey)
-        ? 'https://api.countapi.xyz/get/masoneriaramallo/lms567'
-        : 'https://api.countapi.xyz/hit/masoneriaramallo/lms567';
+      const base = 'https://abacus.jasoncameron.dev';
+      const ns   = 'masoneriaramallo';
+      const key  = 'lms567';
+      // Only increment once per browser session so refreshes don't inflate the number
+      const url = sessionStorage.getItem(sessionKey)
+        ? `${base}/get/${ns}/${key}`
+        : `${base}/hit/${ns}/${key}`;
 
-      fetch(endpoint)
-        .then(r => r.json())
+      const animateTo = (target) => {
+        const start = Math.max(0, target - 60);
+        let current = start;
+        const step = () => {
+          current = Math.min(current + Math.ceil((target - current) / 8 + 1), target);
+          el.textContent = current.toLocaleString('es-AR');
+          el.classList.remove('loading');
+          if (current < target) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      };
+
+      fetch(url)
+        .then(r => {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json();
+        })
         .then(data => {
-          if (data && data.value) {
+          if (data && typeof data.value === 'number') {
             sessionStorage.setItem(sessionKey, '1');
-            // Animate the number rolling up
-            const target = data.value;
-            const start = Math.max(0, target - 80);
-            let current = start;
-            const step = () => {
-              current = Math.min(current + Math.ceil((target - current) / 8 + 1), target);
-              el.textContent = current.toLocaleString('es-AR');
-              el.classList.remove('loading');
-              if (current < target) requestAnimationFrame(step);
-            };
-            requestAnimationFrame(step);
+            animateTo(data.value);
+          } else {
+            throw new Error('Bad payload');
           }
         })
-        .catch(() => { el.textContent = '—'; el.classList.remove('loading'); });
+        .catch((err) => {
+          console.warn('Counter unavailable:', err);
+          // Fallback: localStorage-only counter so we always show something
+          const local = parseInt(localStorage.getItem('lms567_local') || '1', 10);
+          if (!sessionStorage.getItem(sessionKey)) {
+            localStorage.setItem('lms567_local', (local + 1).toString());
+            sessionStorage.setItem(sessionKey, '1');
+          }
+          animateTo(local);
+        });
     })();
 
     // ── FORM SUBMIT (demo — replace with real backend / mailto) ──

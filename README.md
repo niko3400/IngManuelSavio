@@ -114,7 +114,7 @@ El formulario de ingreso abre el cliente de correo del visitante con los datos p
 
 ## Contador de visitantes
 
-Usa [CountAPI](https://countapi.xyz/) (gratuito, sin registro). El contador incrementa una sola vez por sesión de navegador para evitar inflación por recargas.
+Usa [Abacus](https://abacus.jasoncameron.dev/) (gratuito, sin registro). El contador incrementa una sola vez por sesión de navegador para evitar inflación por recargas. Si el servicio cae, hay un fallback en `localStorage` que mantiene un conteo local.
 
 Namespace: `masoneriaramallo` · Key: `lms567`
 
